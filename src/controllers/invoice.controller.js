@@ -120,7 +120,7 @@ export const createInvoice = asyncHandler(async (req, res) => {
     invoice_id: invoice.id,
     product_id: it.product_id || null,
     product_code: it.product_code,
-    product_name: it.product_name,
+    product_name: it.product_name || it.product_code || 'Item',
     product_image: it.product_image || null,
     category: it.category || null,
     brand: it.brand || null,
