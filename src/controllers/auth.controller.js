@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../config/supabase.js';
+import { supabaseAdmin, newAuthClient } from '../config/supabase.js';
 import { asyncHandler, unauthorized, badRequest } from '../utils/errors.js';
 import { ok, created } from '../utils/response.js';
 import { logAudit } from '../services/audit.service.js';
@@ -11,7 +11,10 @@ import { notify } from '../services/notification.service.js';
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password });
+  // Use a dedicated client so the user session does NOT pollute the shared
+  // service-role client (which must stay pure to bypass RLS on profiles).
+  const authClient = newAuthClient();
+  const { data, error } = await authClient.auth.signInWithPassword({ email, password });
 
   if (error || !data?.session) {
     await logAudit({ req, action: 'failed_login', metadata: { email } });
@@ -58,7 +61,8 @@ export const me = asyncHandler(async (req, res) => ok(res, req.user));
 export const refresh = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) throw badRequest('refreshToken is required');
-  const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token: refreshToken });
+  const authClient = newAuthClient();
+  const { data, error } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
   if (error || !data?.session) throw unauthorized('Could not refresh session');
   return ok(res, {
     token: data.session.access_token,

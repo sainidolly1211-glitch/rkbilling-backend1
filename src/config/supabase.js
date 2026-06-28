@@ -26,3 +26,14 @@ export const supabaseAsUser = (accessToken) =>
     auth: { autoRefreshToken: false, persistSession: false },
     realtime,
   });
+
+/**
+ * Fresh anon client used ONLY for auth actions (signInWithPassword / refresh).
+ * A new instance per call ensures the in-memory user session never pollutes the
+ * shared service-role client (which must stay pure to bypass RLS).
+ */
+export const newAuthClient = () =>
+  createClient(env.supabaseUrl, env.supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    realtime,
+  });
