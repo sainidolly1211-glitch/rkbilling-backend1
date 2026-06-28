@@ -42,6 +42,7 @@ export const createInvoice = asyncHandler(async (req, res) => {
   const {
     items = [],
     customer_id = null,
+    customer = null, // { name, phone, email } — auto find-or-create
     payment_mode = 'cash',
     payment_split = {},
     discount = 0,
@@ -52,6 +53,34 @@ export const createInvoice = asyncHandler(async (req, res) => {
 
   if (!Array.isArray(items) || items.length === 0) {
     throw badRequest('At least one item is required');
+  }
+
+  // Resolve the customer: use customer_id if given, else find-or-create by phone
+  // (so every sale's customer shows up in the customer list with name + phone).
+  let finalCustomerId = customer_id;
+  if (!finalCustomerId && customer && (customer.phone || customer.name)) {
+    if (customer.phone) {
+      const { data: existing } = await supabaseAdmin
+        .from('customers')
+        .select('id')
+        .eq('shop_id', req.user.shop_id)
+        .eq('phone', customer.phone)
+        .maybeSingle();
+      if (existing) finalCustomerId = existing.id;
+    }
+    if (!finalCustomerId) {
+      const { data: createdCust, error: custErr } = await supabaseAdmin
+        .from('customers')
+        .insert({
+          shop_id: req.user.shop_id,
+          name: customer.name || 'Customer',
+          phone: customer.phone || null,
+          email: customer.email || null,
+        })
+        .select('id')
+        .single();
+      if (!custErr) finalCustomerId = createdCust.id;
+    }
   }
 
   // Validate selling >= purchase up front (defence in depth; DB also enforces)
@@ -73,7 +102,7 @@ export const createInvoice = asyncHandler(async (req, res) => {
       shop_id: req.user.shop_id,
       branch_id: req.user.branch_id,
       invoice_number: invoiceNumber,
-      customer_id,
+      customer_id: finalCustomerId,
       staff_id: req.user.id,
       payment_mode,
       payment_split,
