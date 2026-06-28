@@ -9,7 +9,7 @@ export const createUserRules = [
   body('email').isEmail(),
   body('password').isLength({ min: 8 }).withMessage('Password min 8 chars'),
   body('full_name').notEmpty(),
-  body('role').isIn(['admin', 'manager', 'staff']),
+  body('role').isIn(['admin', 'manager', 'staff', 'partner']),
 ];
 
 export const productRules = [

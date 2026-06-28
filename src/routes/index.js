@@ -94,7 +94,7 @@ router.get('/users', authenticate, requireRole('admin', 'manager'), misc.listUse
 router.patch('/users/:id/active', authenticate, adminOnly, misc.setUserActive);
 
 // ---- Uploads ---------------------------------------------------------------
-router.post('/upload/images', authenticate, requireRole('admin', 'manager'), upload.array('images', 6), misc.uploadProductImages);
+router.post('/upload/images', authenticate, requireRole('admin', 'manager', 'partner'), upload.array('images', 6), misc.uploadProductImages);
 router.post('/upload/parse', authenticate, requireRole('admin', 'manager'), upload.single('file'), misc.parseImportFile);
 
 export default router;

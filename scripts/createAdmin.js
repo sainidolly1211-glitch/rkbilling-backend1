@@ -15,10 +15,11 @@ import { supabaseAdmin } from '../src/config/supabase.js';
 const SHOP_ID = '11111111-1111-1111-1111-111111111111';
 const BRANCH_ID = '22222222-2222-2222-2222-222222222222';
 
-const [, , emailArg, passwordArg, nameArg] = process.argv;
+const [, , emailArg, passwordArg, nameArg, roleArg] = process.argv;
 const email = emailArg || 'admin@rkgarments.com';
 const password = passwordArg || 'Admin@12345';
 const fullName = nameArg || 'Shop Owner';
+const role = ['admin', 'manager', 'staff', 'partner'].includes(roleArg) ? roleArg : 'admin';
 
 async function run() {
   console.log(`Creating admin: ${email}`);
@@ -54,7 +55,7 @@ async function run() {
     userId = created.user.id;
   }
 
-  // 3) Upsert the profile as admin
+  // 3) Upsert the profile with the requested role
   const { error: profErr } = await supabaseAdmin.from('profiles').upsert(
     {
       id: userId,
@@ -62,17 +63,17 @@ async function run() {
       branch_id: BRANCH_ID,
       full_name: fullName,
       email,
-      role: 'admin',
+      role,
       is_active: true,
     },
     { onConflict: 'id' },
   );
   if (profErr) throw profErr;
 
-  console.log('\n✅ Admin ready!');
+  console.log('\n✅ User ready!');
   console.log('   Email   :', email);
   console.log('   Password:', password);
-  console.log('   Role    : admin');
+  console.log('   Role    :', role);
   console.log('\nNow log in from the frontend with these credentials.');
   process.exit(0);
 }

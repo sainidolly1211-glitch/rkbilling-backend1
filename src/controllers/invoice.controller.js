@@ -245,8 +245,8 @@ export const listInvoices = asyncHandler(async (req, res) => {
   if (req.query.from) query = query.gte('created_at', req.query.from);
   if (req.query.to) query = query.lte('created_at', req.query.to);
 
-  // Staff can only see their own invoices
-  if (req.user.role === 'staff') query = query.eq('staff_id', req.user.id);
+  // Staff & partners can only see their own invoices
+  if (['staff', 'partner'].includes(req.user.role)) query = query.eq('staff_id', req.user.id);
 
   query = query.order(q.sort, { ascending: q.order === 'asc' }).range(q.from, q.to);
   const { data, error, count } = await query;
@@ -257,7 +257,7 @@ export const listInvoices = asyncHandler(async (req, res) => {
 export const getInvoice = asyncHandler(async (req, res) => {
   const full = await fetchFullInvoice(req.params.id, req.user.shop_id);
   if (!full?.id) throw notFound('Invoice not found');
-  if (req.user.role === 'staff' && full.staff_id !== req.user.id) throw forbidden();
+  if (['staff', 'partner'].includes(req.user.role) && full.staff_id !== req.user.id) throw forbidden();
   return ok(res, full);
 });
 
