@@ -48,7 +48,8 @@ export async function buildInvoicePdf(invoice) {
     doc.fontSize(20).font('Helvetica-Bold').text(shop.name || 'RK Garments', { align: 'center' });
     doc.fontSize(8).font('Helvetica').fillColor('#555');
     if (shop.address) doc.text(shop.address, { align: 'center' });
-    const line2 = [shop.city, shop.state, shop.pincode].filter(Boolean).join(', ');
+    const cityState = [shop.city, shop.state].filter(Boolean).join(', ');
+    const line2 = cityState + (shop.pincode ? `${cityState ? ' - ' : ''}${shop.pincode}` : '');
     if (line2) doc.text(line2, { align: 'center' });
     if (shop.phone) doc.text(`Ph: ${shop.phone}`, { align: 'center' });
     if (shop.is_gst_enabled && shop.gstin) doc.text(`GSTIN: ${shop.gstin}`, { align: 'center' });
