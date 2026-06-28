@@ -1,7 +1,7 @@
 # Railway / Nixpacks build configuration
-# sharp needs system libs which Nixpacks provides via the node provider.
+# Node 22 has native WebSocket (needed by @supabase/supabase-js realtime).
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_22"]
 
 [start]
 cmd = "npm start"

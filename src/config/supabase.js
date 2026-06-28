@@ -1,5 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
 import { env } from './env.js';
+
+// Node < 22 has no native WebSocket; supabase-js realtime needs one.
+// The backend doesn't use realtime, but the client constructor still
+// initialises it — so we hand it the `ws` implementation to avoid a crash.
+const realtime = { transport: WebSocket };
 
 /**
  * Service-role client: bypasses RLS. Used by the trusted backend which performs
@@ -7,6 +13,7 @@ import { env } from './env.js';
  */
 export const supabaseAdmin = createClient(env.supabaseUrl, env.supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  realtime,
 });
 
 /**
@@ -17,4 +24,5 @@ export const supabaseAsUser = (accessToken) =>
   createClient(env.supabaseUrl, env.supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime,
   });
