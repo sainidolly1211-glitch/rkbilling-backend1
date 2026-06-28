@@ -49,6 +49,41 @@ export const ownerReport = asyncHandler(async (req, res) => {
   });
 });
 
+/** Admin: below-cost (loss) sales — item, cost, sold price, loss, who, when. */
+export const belowCostSales = asyncHandler(async (req, res) => {
+  const { data, error } = await supabaseAdmin
+    .from('invoice_items')
+    .select('id, product_code, product_name, product_image, purchase_price, selling_price, quantity, line_total, created_at, invoices!inner(invoice_number, shop_id, created_at, staff:profiles(full_name), customer:customers(name, phone))')
+    .eq('is_below_cost', true)
+    .eq('invoices.shop_id', req.user.shop_id)
+    .order('created_at', { ascending: false })
+    .limit(500);
+  if (error) throw error;
+
+  const rows = (data || []).map((r) => ({
+    id: r.id,
+    invoice_number: r.invoices?.invoice_number,
+    product_code: r.product_code,
+    product_name: r.product_name,
+    product_image: r.product_image,
+    cost_price: Number(r.purchase_price),
+    sold_price: Number(r.selling_price),
+    quantity: r.quantity,
+    revenue: Number(r.line_total),
+    loss: Math.max(0, (Number(r.purchase_price) - Number(r.selling_price)) * r.quantity),
+    staff: r.invoices?.staff?.full_name || null,
+    customer: r.invoices?.customer?.name || null,
+    created_at: r.created_at,
+  }));
+
+  const totals = rows.reduce(
+    (a, r) => { a.revenue += r.revenue; a.loss += r.loss; a.count += 1; return a; },
+    { revenue: 0, loss: 0, count: 0 },
+  );
+
+  return ok(res, { rows, totals });
+});
+
 /** Export invoices or products as Excel/CSV. ?type=invoices|products&format=xlsx|csv */
 export const exportData = asyncHandler(async (req, res) => {
   const type = req.query.type === 'products' ? 'products' : 'invoices';

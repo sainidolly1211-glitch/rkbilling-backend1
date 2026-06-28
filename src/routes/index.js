@@ -68,6 +68,7 @@ router.get('/analytics/breakdown', authenticate, analytics.breakdown);
 
 // ---- Reports ---------------------------------------------------------------
 router.get('/reports/owner', authenticate, requireRole('admin', 'manager'), reports.ownerReport);
+router.get('/reports/below-cost', authenticate, requireRole('admin', 'manager'), reports.belowCostSales);
 router.get('/reports/export', authenticate, requireRole('admin', 'manager'), reports.exportData);
 
 // ---- Audit -----------------------------------------------------------------

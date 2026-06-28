@@ -83,9 +83,9 @@ export const createInvoice = asyncHandler(async (req, res) => {
     }
   }
 
-  // Validate selling >= purchase up front (defence in depth; DB also enforces)
+  // Validate selling >= purchase up front (except explicit below-cost lines)
   for (const it of items) {
-    if (Number(it.selling_price) < Number(it.purchase_price)) {
+    if (!it.is_below_cost && Number(it.selling_price) < Number(it.purchase_price)) {
       throw badRequest(`Selling price below purchase price for ${it.product_code}`);
     }
     if (!it.quantity || Number(it.quantity) <= 0) {
@@ -129,6 +129,7 @@ export const createInvoice = asyncHandler(async (req, res) => {
     quantity: Number(it.quantity),
     purchase_price: Number(it.purchase_price),
     selling_price: Number(it.selling_price),
+    is_below_cost: !!it.is_below_cost,
   }));
 
   const { error: itemsErr } = await supabaseAdmin.from('invoice_items').insert(itemRows);
