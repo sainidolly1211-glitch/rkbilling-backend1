@@ -17,10 +17,31 @@ app.set('trust proxy', 1);
 // Security headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-// CORS
+// CORS — allow configured CLIENT_URL(s), any *.vercel.app deployment, and localhost.
+// This is robust to preview deployments and trailing-slash mismatches.
+const allowedOrigins = (env.clientUrl || '')
+  .split(',')
+  .map((s) => s.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: env.clientUrl === '*' ? true : env.clientUrl.split(','),
+    origin(origin, cb) {
+      // Non-browser requests (curl, server-to-server) have no origin.
+      if (!origin) return cb(null, true);
+      const clean = origin.replace(/\/+$/, '');
+      let host = '';
+      try { host = new URL(origin).hostname; } catch { host = ''; }
+
+      const allowed =
+        env.clientUrl === '*' ||
+        allowedOrigins.includes(clean) ||
+        /\.vercel\.app$/i.test(host) ||
+        /^localhost$/i.test(host) ||
+        host === '127.0.0.1';
+
+      return cb(null, allowed);
+    },
     credentials: true,
   }),
 );
