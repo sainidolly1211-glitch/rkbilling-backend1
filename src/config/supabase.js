@@ -1,0 +1,20 @@
+import { createClient } from '@supabase/supabase-js';
+import { env } from './env.js';
+
+/**
+ * Service-role client: bypasses RLS. Used by the trusted backend which performs
+ * its own JWT + role-based authorization. NEVER expose this key to the client.
+ */
+export const supabaseAdmin = createClient(env.supabaseUrl, env.supabaseServiceKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+/**
+ * Anon client factory scoped to a user's access token (respects RLS).
+ * Useful for actions that should be performed strictly as the end user.
+ */
+export const supabaseAsUser = (accessToken) =>
+  createClient(env.supabaseUrl, env.supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { autoRefreshToken: false, persistSession: false },
+  });

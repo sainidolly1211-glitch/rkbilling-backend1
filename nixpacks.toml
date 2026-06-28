@@ -1,0 +1,7 @@
+# Railway / Nixpacks build configuration
+# sharp needs system libs which Nixpacks provides via the node provider.
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[start]
+cmd = "npm start"
